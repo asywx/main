@@ -1,24 +1,22 @@
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local CurrentCamera = workspace.CurrentCamera
+entCamera = workspace.CurrentCamera
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
--- Korábbi UI takarítása
+-- Korábbi UI elemek takarítása az újrafuttatásokhoz
 if CoreGui:FindFirstChild("SolaraSmoothBlackUI") then CoreGui.SolaraSmoothBlackUI:Destroy() end
 if CoreGui:FindFirstChild("SolaraKeySystemUI") then CoreGui.SolaraKeySystemUI:Destroy() end
 
 -- === KULCS BEÁLLÍTÁSA ===
-local CorrectKey = "SOLARA_FREE_2026" -- Ezt írd át amire szeretnéd!
+local CorrectKey = "freehun2026" -- Ezt írd át amire szeretnéd!
 local KeyVerified = false
 
 -- === ÁLLAPOTOK ===
 local FlyEnabled = false
 local EspEnabled = false
 local NoclipEnabled = false
-local UiVisible = false -- Alapból hamis, csak sikeres kulcs után nyitható
+local UiVisible = false -- Kezdetben hamis, a sikeres kulcs után vált igazra
 local FlySpeed = 50
 local BodyGyro, BodyVelocity
 local ActiveEspObjects = {}
@@ -123,7 +121,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false -- Alapból rejtve
+MainFrame.Visible = false -- Alapból szigorúan rejtve van a sikeres ellenőrzésig
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
@@ -156,7 +154,7 @@ Line.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Line.BorderSizePixel = 0
 Line.Parent = MainFrame
 
--- Menü elrejtése/megjelenítése (Right Shift) - Csak ha a kulcs már jó!
+-- Menü elrejtése/megjelenítése a Right Shift billentyűvel (Csak ha a kulcs már ellenőrizve van!)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift and KeyVerified then
         UiVisible = not UiVisible
@@ -257,7 +255,7 @@ local function ManageFly(state)
             end
             if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
             if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
-            if Character and Character:FindFirstChild("Animate") then Character.Animate.Disabled = false end
+if Character and Character:FindFirstChild("Animate") then Character.Animate.Disabled = false end
 end)
 else
 if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
@@ -335,7 +333,7 @@ if objects.Billboard then objects.Billboard.Enabled = state end
 if objects.Highlight then objects.Highlight.Enabled = state end
 end
 end
--- Gombok bekötése a fő UI-hoz
+-- Funkciókapcsolók hozzáadása a főmenühöz
 CreateToggle("Repülés (Fly)", UDim2.new(0, 10, 0, 55), ManageFly)
 CreateToggle("Falon átjárás (Noclip)", UDim2.new(0, 10, 0, 105), ManageNoclip)
 CreateToggle("Játékos ESP (Name+HP)", UDim2.new(0, 10, 0, 155), ManageESP)
@@ -344,18 +342,22 @@ SubmitBtn.MouseButton1Click:Connect(function()
 if TextBox.Text == CorrectKey then
 KeyVerified = true
 UiVisible = true
--- Siker animáció (Zöld villanás) és bezárás
+-- Siker animáció futtatása (Zöld gomb villanás)
 TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 150, 50), Text = "SIKERES BELÉPÉS!"}):Play()
-task.wait(0.5)
-KeyGui:Destroy() -- Kulcs ablak törlése
-MainFrame.Visible = true -- Főmenü megjelenítése
--- ESP Elindítása a többi játékosra
-for _, player in pairs(Players:GetPlayers()) do ApplyAdvancedESP(player) end
+task.wait(0.4)
+-- KULCS ABLAK ELTŰNTETÉSE (Törlés a memóriából)
+KeyGui:Destroy()
+-- FŐ PANEL AZONNALI MEGJELENÍTÉSE
+MainFrame.Visible = true
+-- ESP Rendszer aktiválása a szerveren lévő játékosokra
+for _, player in pairs(Players:GetPlayers()) do
+ApplyAdvancedESP(player)
+end
 Players.PlayerAdded:Connect(ApplyAdvancedESP)
 Players.PlayerRemoving:Connect(RemoveESP)
-print("Solara sikeresen feloldva!")
+print("Solara sikeresen feloldva, panel megnyitva!")
 else
--- Hiba animáció (Piros villanás)
+-- Hiba animáció (Piros villanás és rázkódás jellegű effekt a kereten)
 TextBox.Text = ""
 TweenService:Create(BoxStroke, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true), {Color = Color3.fromRGB(200, 50, 50)}):Play()
 SubmitBtn.Text = "HIBÁS KULCS!"
