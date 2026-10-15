@@ -4,24 +4,112 @@ local CurrentCamera = workspace.CurrentCamera
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService") -- Szükséges a nocliphez
+local RunService = game:GetService("RunService")
 
 -- Korábbi UI takarítása
-if CoreGui:FindFirstChild("SolaraSmoothBlackUI") then
-    CoreGui.SolaraSmoothBlackUI:Destroy()
-end
+if CoreGui:FindFirstChild("SolaraSmoothBlackUI") then CoreGui.SolaraSmoothBlackUI:Destroy() end
+if CoreGui:FindFirstChild("SolaraKeySystemUI") then CoreGui.SolaraKeySystemUI:Destroy() end
+
+-- === KULCS BEÁLLÍTÁSA ===
+local CorrectKey = "SOLARA_FREE_2026" -- Ezt írd át amire szeretnéd!
+local KeyVerified = false
 
 -- === ÁLLAPOTOK ===
 local FlyEnabled = false
 local EspEnabled = false
 local NoclipEnabled = false
-local UiVisible = true
+local UiVisible = false -- Alapból hamis, csak sikeres kulcs után nyitható
 local FlySpeed = 50
 local BodyGyro, BodyVelocity
 local ActiveEspObjects = {}
 local NoclipConnection
 
--- === UI LÉTREHOZÁSA (SMOOTH BLACK THEME) ===
+-- === KEY SYSTEM UI LÉTREHOZÁSA ===
+local KeyGui = Instance.new("ScreenGui")
+KeyGui.Name = "SolaraKeySystemUI"
+KeyGui.Parent = CoreGui
+KeyGui.ResetOnSpawn = false
+
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Name = "KeyFrame"
+KeyFrame.Size = UDim2.new(0, 320, 0, 180)
+KeyFrame.Position = UDim2.new(0.5, -160, 0.4, -90)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+KeyFrame.BorderSizePixel = 0
+KeyFrame.Active = true
+KeyFrame.Draggable = true
+KeyFrame.Parent = KeyGui
+
+local KeyCorner = Instance.new("UICorner")
+KeyCorner.CornerRadius = UDim.new(0, 10)
+KeyCorner.Parent = KeyFrame
+
+local KeyStroke = Instance.new("UIStroke")
+KeyStroke.Color = Color3.fromRGB(40, 40, 40)
+KeyStroke.Thickness = 1
+KeyStroke.Parent = KeyFrame
+
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, 0, 0, 40)
+KeyTitle.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+KeyTitle.Text = "  SOLARA KEY SYSTEM"
+KeyTitle.TextColor3 = Color3.fromRGB(235, 235, 235)
+KeyTitle.TextSize = 13
+KeyTitle.Font = Enum.Font.SourceSansBold
+KeyTitle.TextXAlignment = Enum.TextXAlignment.Left
+KeyTitle.Parent = KeyFrame
+
+local KeyTitleCorner = Instance.new("UICorner")
+KeyTitleCorner.CornerRadius = UDim.new(0, 10)
+KeyTitleCorner.Parent = KeyTitle
+
+local KeyLine = Instance.new("Frame")
+KeyLine.Size = UDim2.new(1, 0, 0, 1)
+KeyLine.Position = UDim2.new(0, 0, 0, 39)
+KeyLine.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+KeyLine.BorderSizePixel = 0
+KeyLine.Parent = KeyFrame
+
+-- Kulcs beviteli mező (TextBox)
+local TextBox = Instance.new("TextBox")
+TextBox.Size = UDim2.new(1, -40, 0, 35)
+TextBox.Position = UDim2.new(0, 20, 0, 65)
+TextBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TextBox.BorderSizePixel = 0
+TextBox.Text = ""
+TextBox.PlaceholderText = "Írd ide a kulcsot..."
+TextBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
+TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextBox.TextSize = 14
+TextBox.Font = Enum.Font.SourceSans
+TextBox.Parent = KeyFrame
+
+local BoxCorner = Instance.new("UICorner")
+BoxCorner.CornerRadius = UDim.new(0, 6)
+BoxCorner.Parent = TextBox
+
+local BoxStroke = Instance.new("UIStroke")
+BoxStroke.Color = Color3.fromRGB(45, 45, 45)
+BoxStroke.Thickness = 1
+BoxStroke.Parent = TextBox
+
+-- Ellenőrzés Gomb
+local SubmitBtn = Instance.new("TextButton")
+SubmitBtn.Size = UDim2.new(1, -40, 0, 35)
+SubmitBtn.Position = UDim2.new(0, 20, 0, 115)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+SubmitBtn.BorderSizePixel = 0
+SubmitBtn.Text = "Kulcs Ellenőrzése"
+SubmitBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+SubmitBtn.TextSize = 14
+SubmitBtn.Font = Enum.Font.SourceSansBold
+SubmitBtn.Parent = KeyFrame
+
+local BtnCorner2 = Instance.new("UICorner")
+BtnCorner2.CornerRadius = UDim.new(0, 6)
+BtnCorner2.Parent = SubmitBtn
+
+-- === FŐ MENÜ UI (SMOOTH BLACK THEME) ===
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SolaraSmoothBlackUI"
 ScreenGui.Parent = CoreGui
@@ -29,13 +117,13 @@ ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
--- Megnöveltem a magasságot 180-ról 220-ra, hogy kényelmesen elférjen a 3 gomb
 MainFrame.Size = UDim2.new(0, 240, 0, 220)
 MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Visible = false -- Alapból rejtve
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
@@ -50,7 +138,7 @@ UIStroke.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-Title.Text = "  HunScripts Cheat Panel V2"
+Title.Text = "  SOLARA MENU [RShift]"
 Title.TextColor3 = Color3.fromRGB(235, 235, 235)
 Title.TextSize = 13
 Title.Font = Enum.Font.SourceSansBold
@@ -68,9 +156,9 @@ Line.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Line.BorderSizePixel = 0
 Line.Parent = MainFrame
 
--- Menü elrejtése (Right Shift)
+-- Menü elrejtése/megjelenítése (Right Shift) - Csak ha a kulcs már jó!
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift and KeyVerified then
         UiVisible = not UiVisible
         MainFrame.Visible = UiVisible
     end
@@ -129,7 +217,7 @@ local function CreateToggle(name, position, callback)
     end)
 end
 
--- === FLY LOGIKA ===
+-- === LOGIKÁK (FLY, NOCLIP, ESP) ===
 local function ManageFly(state)
     FlyEnabled = state
     local Character = LocalPlayer.Character
@@ -137,10 +225,7 @@ local function ManageFly(state)
     local RootPart = Character.HumanoidRootPart
 
     if FlyEnabled then
-        if Character:FindFirstChild("Animate") then
-            Character.Animate.Disabled = true
-        end
-
+        if Character:FindFirstChild("Animate") then Character.Animate.Disabled = true end
         BodyGyro = Instance.new("BodyGyro")
         BodyGyro.P = 9e4
         BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -156,25 +241,12 @@ local function ManageFly(state)
             while FlyEnabled and Character and RootPart and BodyGyro and BodyVelocity do
                 task.wait()
                 local MoveVector = Vector3.new(0,0,0)
-
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                    MoveVector = MoveVector + CurrentCamera.CFrame.LookVector
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-                    MoveVector = MoveVector - CurrentCamera.CFrame.LookVector
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                    MoveVector = MoveVector - CurrentCamera.CFrame.RightVector
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                    MoveVector = MoveVector + CurrentCamera.CFrame.RightVector
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                    MoveVector = MoveVector + Vector3.new(0, 1, 0)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-                    MoveVector = MoveVector - Vector3.new(0, 1, 0)
-                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then MoveVector = MoveVector + CurrentCamera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then MoveVector = MoveVector - CurrentCamera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then MoveVector = MoveVector - CurrentCamera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then MoveVector = MoveVector + CurrentCamera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then MoveVector = MoveVector + Vector3.new(0, 1, 0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then MoveVector = MoveVector - Vector3.new(0, 1, 0) end
 
                 BodyGyro.cframe = CurrentCamera.CFrame
                 if MoveVector.Magnitude > 0 then
@@ -183,90 +255,64 @@ local function ManageFly(state)
                     BodyVelocity.velocity = Vector3.new(0, 0, 0)
                 end
             end
-            
             if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
             if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
-            if Character and Character:FindFirstChild("Animate") then
-                Character.Animate.Disabled = false
-            end
-        end)
-    else
-        if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
-        if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
-        if Character and Character:FindFirstChild("Animate") then
-            Character.Animate.Disabled = false
-        end
-    end
+            if Character and Character:FindFirstChild("Animate") then Character.Animate.Disabled = false end
+end)
+else
+if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
+if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
+if Character and Character:FindFirstChild("Animate") then Character.Animate.Disabled = false end
 end
-
--- === NOCLIP LOGIKA ===
+end
 local function ManageNoclip(state)
-    NoclipEnabled = state
-    
-    if NoclipEnabled then
-        -- Minden frame-ben lefut és kikapcsolja a CanCollide-ot
-        NoclipConnection = RunService.Stepped:Connect(function()
-            local Character = LocalPlayer.Character
-            if Character and NoclipEnabled then
-                for _, child in pairs(Character:GetDescendants()) do
-                    if child:IsA("BasePart") and child.CanCollide then
-                        child.CanCollide = false
-                    end
-                end
-            end
-        end)
-    else
-        if NoclipConnection then
-            NoclipConnection:Disconnect()
-            NoclipConnection = nil
-        end
-    end
+NoclipEnabled = state
+if NoclipEnabled then
+NoclipConnection = RunService.Stepped:Connect(function()
+local Character = LocalPlayer.Character
+if Character and NoclipEnabled then
+for _, child in pairs(Character:GetDescendants()) do
+if child:IsA("BasePart") then child.CanCollide = false end
 end
-
--- === ADVANCED ESP LOGIKA ===
+end
+end)
+else
+if NoclipConnection then NoclipConnection:Disconnect() NoclipConnection = nil end
+end
+end
 local function RemoveESP(player)
-    if ActiveEspObjects[player] then
-        if ActiveEspObjects[player].Billboard then ActiveEspObjects[player].Billboard:Destroy() end
-        if ActiveEspObjects[player].Highlight then ActiveEspObjects[player].Highlight:Destroy() end
-        if ActiveEspObjects[player].Connection then ActiveEspObjects[player].Connection:Disconnect() end
-        ActiveEspObjects[player] = nil
-    end
+if ActiveEspObjects[player] then
+if ActiveEspObjects[player].Billboard then ActiveEspObjects[player].Billboard:Destroy() end
+if ActiveEspObjects[player].Highlight then ActiveEspObjects[player].Highlight:Destroy() end
+if ActiveEspObjects[player].Connection then ActiveEspObjects[player].Connection:Disconnect() end
+ActiveEspObjects[player] = nil
 end
-
+end
 local function ApplyAdvancedESP(player)
-    if player == LocalPlayer then return end
-    RemoveESP(player)
-
-    local function CharacterSetup(character)
-        if not character then return end
-        local head = character:WaitForChild("Head", 5)
-        local humanoid = character:WaitForChild("Humanoid", 5)
-        if not head or not humanoid then return end
-
-        local Highlight = Instance.new("Highlight")
-        Highlight.Name = "SolaraESP_Core"
-        Highlight.FillColor = Color3.fromRGB(255, 255, 255)
-        Highlight.FillTransparency = 0.6
-        Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-        Highlight.OutlineTransparency = 0
-        Highlight.Adornee = character
-        Highlight.Enabled = EspEnabled
-        Highlight.Parent = character
-
-        local Billboard = Instance.new("BillboardGui")
-        Billboard.Name = "SolaraESP_Text"
-        Billboard.Size = UDim2.new(0, 200, 0, 50)
-        Billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-        Billboard.AlwaysOnTop = true
-        Billboard.Enabled = EspEnabled
-        Billboard.Adornee = head
-        Billboard.Parent = head
-
-        local TextLabel = Instance.new("TextLabel")
-        TextLabel.Size = UDim2.new(1, 0, 1, 0)
-        TextLabel.BackgroundTransparency = 1
+if player == LocalPlayer then return end
+RemoveESP(player)
+local function CharacterSetup(character)
+if not character then return end
+local head = character:WaitForChild("Head", 5)
+local humanoid = character:WaitForChild("Humanoid", 5)
+if not head or not humanoid then return end
+local Highlight = Instance.new("Highlight")
+Highlight.FillColor = Color3.fromRGB(255, 255, 255)
+Highlight.FillTransparency = 0.6
+Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+Highlight.Enabled = EspEnabled
+Highlight.Parent = character
+local Billboard = Instance.new("BillboardGui")
+Billboard.Size = UDim2.new(0, 200, 0, 50)
+Billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+Billboard.AlwaysOnTop = true
+Billboard.Enabled = EspEnabled
+Billboard.Adornee = head
+Billboard.Parent = head
+local TextLabel = Instance.new("TextLabel")
+TextLabel.Size = UDim2.new(1, 0, 1, 0)
+TextLabel.BackgroundTransparency = 1
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.TextStrokeTransparency = 0
 TextLabel.Font = Enum.Font.SourceSansBold
 TextLabel.TextSize = 14
 TextLabel.Parent = Billboard
@@ -287,20 +333,35 @@ EspEnabled = state
 for player, objects in pairs(ActiveEspObjects) do
 if objects.Billboard then objects.Billboard.Enabled = state end
 if objects.Highlight then objects.Highlight.Enabled = state end
-if state and objects.TextLabel and player.Character and player.Character:FindFirstChild("Humanoid") then
-local hum = player.Character.Humanoid
-objects.TextLabel.Text = string.format("%s\n[HP: %d/%d]", player.Name, math.floor(hum.Health), math.floor(hum.MaxHealth))
 end
 end
-end
--- Kezelők minden játékosra
-for _, player in pairs(Players:GetPlayers()) do
-ApplyAdvancedESP(player)
-end
+-- Gombok bekötése a fő UI-hoz
+CreateToggle("Repülés (Fly)", UDim2.new(0, 10, 0, 55), ManageFly)
+CreateToggle("Falon átjárás (Noclip)", UDim2.new(0, 10, 0, 105), ManageNoclip)
+CreateToggle("Játékos ESP (Name+HP)", UDim2.new(0, 10, 0, 155), ManageESP)
+-- === KULCS ELLENŐRZÉS LOGIKA ===
+SubmitBtn.MouseButton1Click:Connect(function()
+if TextBox.Text == CorrectKey then
+KeyVerified = true
+UiVisible = true
+-- Siker animáció (Zöld villanás) és bezárás
+TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 150, 50), Text = "SIKERES BELÉPÉS!"}):Play()
+task.wait(0.5)
+KeyGui:Destroy() -- Kulcs ablak törlése
+MainFrame.Visible = true -- Főmenü megjelenítése
+-- ESP Elindítása a többi játékosra
+for _, player in pairs(Players:GetPlayers()) do ApplyAdvancedESP(player) end
 Players.PlayerAdded:Connect(ApplyAdvancedESP)
 Players.PlayerRemoving:Connect(RemoveESP)
--- Gombok bekötése az UI-hoz
-CreateToggle("Repülés", UDim2.new(0, 10, 0, 55), ManageFly)
-CreateToggle("Noclip", UDim2.new(0, 10, 0, 105), ManageNoclip)
-CreateToggle("Player ESP (Name+HP)", UDim2.new(0, 10, 0, 155), ManageESP)
-print("Smooth UI (Fly + Noclip + ESP) sikeresen betöltve!")
+print("Solara sikeresen feloldva!")
+else
+-- Hiba animáció (Piros villanás)
+TextBox.Text = ""
+TweenService:Create(BoxStroke, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true), {Color = Color3.fromRGB(200, 50, 50)}):Play()
+SubmitBtn.Text = "HIBÁS KULCS!"
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40)
+task.wait(1)
+SubmitBtn.Text = "Kulcs Ellenőrzése"
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+end
+end)
