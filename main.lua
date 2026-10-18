@@ -1,369 +1,327 @@
-entCamera = workspace.CurrentCamera
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
-local TweenService = game:GetService("TweenService")
+-- Roblox Fly + Random TP + Aimbot + ESP + Auto Shoot (Solara kompatibilis)
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
--- Korábbi UI elemek takarítása az újrafuttatásokhoz
-if CoreGui:FindFirstChild("SolaraSmoothBlackUI") then CoreGui.SolaraSmoothBlackUI:Destroy() end
-if CoreGui:FindFirstChild("SolaraKeySystemUI") then CoreGui.SolaraKeySystemUI:Destroy() end
+-- VirtualInputManager betöltése az Auto Shoot szimulációhoz
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
--- === KULCS BEÁLLÍTÁSA ===
-local CorrectKey = "freehun2026" -- Ezt írd át amire szeretnéd!
-local KeyVerified = false
-
--- === ÁLLAPOTOK ===
-local FlyEnabled = false
-local EspEnabled = false
-local NoclipEnabled = false
-local UiVisible = false -- Kezdetben hamis, a sikeres kulcs után vált igazra
-local FlySpeed = 50
-local BodyGyro, BodyVelocity
-local ActiveEspObjects = {}
-local NoclipConnection
-
--- === KEY SYSTEM UI LÉTREHOZÁSA ===
-local KeyGui = Instance.new("ScreenGui")
-KeyGui.Name = "SolaraKeySystemUI"
-KeyGui.Parent = CoreGui
-KeyGui.ResetOnSpawn = false
-
-local KeyFrame = Instance.new("Frame")
-KeyFrame.Name = "KeyFrame"
-KeyFrame.Size = UDim2.new(0, 320, 0, 180)
-KeyFrame.Position = UDim2.new(0.5, -160, 0.4, -90)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-KeyFrame.BorderSizePixel = 0
-KeyFrame.Active = true
-KeyFrame.Draggable = true
-KeyFrame.Parent = KeyGui
-
-local KeyCorner = Instance.new("UICorner")
-KeyCorner.CornerRadius = UDim.new(0, 10)
-KeyCorner.Parent = KeyFrame
-
-local KeyStroke = Instance.new("UIStroke")
-KeyStroke.Color = Color3.fromRGB(40, 40, 40)
-KeyStroke.Thickness = 1
-KeyStroke.Parent = KeyFrame
-
-local KeyTitle = Instance.new("TextLabel")
-KeyTitle.Size = UDim2.new(1, 0, 0, 40)
-KeyTitle.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-KeyTitle.Text = "  SOLARA KEY SYSTEM"
-KeyTitle.TextColor3 = Color3.fromRGB(235, 235, 235)
-KeyTitle.TextSize = 13
-KeyTitle.Font = Enum.Font.SourceSansBold
-KeyTitle.TextXAlignment = Enum.TextXAlignment.Left
-KeyTitle.Parent = KeyFrame
-
-local KeyTitleCorner = Instance.new("UICorner")
-KeyTitleCorner.CornerRadius = UDim.new(0, 10)
-KeyTitleCorner.Parent = KeyTitle
-
-local KeyLine = Instance.new("Frame")
-KeyLine.Size = UDim2.new(1, 0, 0, 1)
-KeyLine.Position = UDim2.new(0, 0, 0, 39)
-KeyLine.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-KeyLine.BorderSizePixel = 0
-KeyLine.Parent = KeyFrame
-
--- Kulcs beviteli mező (TextBox)
-local TextBox = Instance.new("TextBox")
-TextBox.Size = UDim2.new(1, -40, 0, 35)
-TextBox.Position = UDim2.new(0, 20, 0, 65)
-TextBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-TextBox.BorderSizePixel = 0
-TextBox.Text = ""
-TextBox.PlaceholderText = "Írd ide a kulcsot..."
-TextBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
-TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextBox.TextSize = 14
-TextBox.Font = Enum.Font.SourceSans
-TextBox.Parent = KeyFrame
-
-local BoxCorner = Instance.new("UICorner")
-BoxCorner.CornerRadius = UDim.new(0, 6)
-BoxCorner.Parent = TextBox
-
-local BoxStroke = Instance.new("UIStroke")
-BoxStroke.Color = Color3.fromRGB(45, 45, 45)
-BoxStroke.Thickness = 1
-BoxStroke.Parent = TextBox
-
--- Ellenőrzés Gomb
-local SubmitBtn = Instance.new("TextButton")
-SubmitBtn.Size = UDim2.new(1, -40, 0, 35)
-SubmitBtn.Position = UDim2.new(0, 20, 0, 115)
-SubmitBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-SubmitBtn.BorderSizePixel = 0
-SubmitBtn.Text = "Kulcs Ellenőrzése"
-SubmitBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
-SubmitBtn.TextSize = 14
-SubmitBtn.Font = Enum.Font.SourceSansBold
-SubmitBtn.Parent = KeyFrame
-
-local BtnCorner2 = Instance.new("UICorner")
-BtnCorner2.CornerRadius = UDim.new(0, 6)
-BtnCorner2.Parent = SubmitBtn
-
--- === FŐ MENÜ UI (SMOOTH BLACK THEME) ===
+-- UI Létrehozása
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SolaraSmoothBlackUI"
-ScreenGui.Parent = CoreGui
+ScreenGui.Name = "SolaraFlyGui"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- Fő Panel (Átméretezve a plusz gomb miatt)
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 240, 0, 220)
-MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Size = UDim2.new(0, 220, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -110, 0.4, -175)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false -- Alapból szigorúan rejtve van a sikeres ellenőrzésig
 MainFrame.Parent = ScreenGui
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
-MainCorner.Parent = MainFrame
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
 
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(40, 40, 40)
-UIStroke.Thickness = 1
-UIStroke.Parent = MainFrame
-
+-- Cím / Fejléc
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-Title.Text = "  SOLARA MENU [RShift]"
-Title.TextColor3 = Color3.fromRGB(235, 235, 235)
-Title.TextSize = 13
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.BorderSizePixel = 0
+Title.Text = "SOLARA MULTITOOL v3"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
 Title.Font = Enum.Font.SourceSansBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = MainFrame
 
 local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.CornerRadius = UDim.new(0, 8)
 TitleCorner.Parent = Title
 
-local Line = Instance.new("Frame")
-Line.Size = UDim2.new(1, 0, 0, 1)
-Line.Position = UDim2.new(0, 0, 0, 39)
-Line.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-Line.BorderSizePixel = 0
-Line.Parent = MainFrame
+-- Fly Ki/Be Kapcsoló Gomb
+local FlyButton = Instance.new("TextButton")
+FlyButton.Size = UDim2.new(0, 180, 0, 35)
+FlyButton.Position = UDim2.new(0.5, -90, 0, 45)
+FlyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+FlyButton.Text = "Fly: OFF"
+FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyButton.TextSize = 15
+FlyButton.Font = Enum.Font.SourceSansBold
+FlyButton.Parent = MainFrame
 
--- Menü elrejtése/megjelenítése a Right Shift billentyűvel (Csak ha a kulcs már ellenőrizve van!)
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift and KeyVerified then
-        UiVisible = not UiVisible
-        MainFrame.Visible = UiVisible
-    end
-end)
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 6)
+ButtonCorner.Parent = FlyButton
 
--- === SMOOTH SWITCH LÉTREHOZÓ ===
-local function CreateToggle(name, position, callback)
-    local ToggleFrame = Instance.new("Frame")
-    ToggleFrame.Size = UDim2.new(1, -20, 0, 40)
-    ToggleFrame.Position = position
-    ToggleFrame.BackgroundTransparency = 1
-    ToggleFrame.Parent = MainFrame
+-- Random TP Gomb
+local TpButton = Instance.new("TextButton")
+TpButton.Size = UDim2.new(0, 180, 0, 35)
+TpButton.Position = UDim2.new(0.5, -90, 0, 90)
+TpButton.BackgroundColor3 = Color3.fromRGB(40, 100, 200)
+TpButton.Text = "Random TP"
+TpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+TpButton.TextSize = 15
+TpButton.Font = Enum.Font.SourceSansBold
+TpButton.Parent = MainFrame
 
-    local TextLabel = Instance.new("TextLabel")
-    TextLabel.Size = UDim2.new(0.7, 0, 1, 0)
-    TextLabel.BackgroundTransparency = 1
-    TextLabel.Text = name
-    TextLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    TextLabel.TextSize = 14
-    TextLabel.Font = Enum.Font.SourceSans
-    TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TextLabel.Parent = ToggleFrame
+local TpCorner = Instance.new("UICorner")
+TpCorner.CornerRadius = UDim.new(0, 6)
+TpCorner.Parent = TpButton
 
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(0, 45, 0, 22)
-    Button.Position = UDim2.new(1, -45, 0.5, -11)
-    Button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    Button.Text = ""
-    Button.Parent = ToggleFrame
+-- ESP Ki/Be Kapcsoló Gomb
+local EspButton = Instance.new("TextButton")
+EspButton.Size = UDim2.new(0, 180, 0, 35)
+EspButton.Position = UDim2.new(0.5, -90, 0, 135)
+EspButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+EspButton.Text = "ESP: OFF"
+EspButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+EspButton.TextSize = 15
+EspButton.Font = Enum.Font.SourceSansBold
+EspButton.Parent = MainFrame
 
-    local BtnCorner = Instance.new("UICorner")
-    BtnCorner.CornerRadius = UDim.new(1, 0)
-    BtnCorner.Parent = Button
+local EspCorner = Instance.new("UICorner")
+EspCorner.CornerRadius = UDim.new(0, 6)
+EspCorner.Parent = EspButton
 
-    local Circle = Instance.new("Frame")
-    Circle.Size = UDim2.new(0, 16, 0, 16)
-    Circle.Position = UDim2.new(0, 3, 0.5, -8)
-    Circle.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
-    Circle.Parent = Button
+-- Auto Shoot Ki/Be Kapcsoló Gomb
+local AutoShootButton = Instance.new("TextButton")
+AutoShootButton.Size = UDim2.new(0, 180, 0, 35)
+AutoShootButton.Position = UDim2.new(0.5, -90, 0, 180)
+AutoShootButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+AutoShootButton.Text = "Auto Shoot: OFF"
+AutoShootButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoShootButton.TextSize = 15
+AutoShootButton.Font = Enum.Font.SourceSansBold
+AutoShootButton.Parent = MainFrame
 
-    local CircleCorner = Instance.new("UICorner")
-    CircleCorner.CornerRadius = UDim.new(1, 0)
-    CircleCorner.Parent = Circle
+local AutoShootCorner = Instance.new("UICorner")
+AutoShootCorner.CornerRadius = UDim.new(0, 6)
+AutoShootCorner.Parent = AutoShootButton
 
-    local Enabled = false
-    Button.MouseButton1Click:Connect(function()
-        Enabled = not Enabled
-        callback(Enabled)
-        if Enabled then
-            TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 150, 50)}):Play()
-            TweenService:Create(Circle, TweenInfo.new(0.2), {Position = UDim2.new(1, -19, 0.5, -8), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-        else
-            TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
-            TweenService:Create(Circle, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -8), BackgroundColor3 = Color3.fromRGB(150, 150, 150)}):Play()
+-- Aimbot Infó Panel
+local AimLabel = Instance.new("TextLabel")
+AimLabel.Size = UDim2.new(1, 0, 0, 25)
+AimLabel.Position = UDim2.new(0, 0, 0, 230)
+AimLabel.BackgroundTransparency = 1
+AimLabel.Text = "[Jobb Klikk: AIMBOT]"
+AimLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
+AimLabel.TextSize = 14
+AimLabel.Font = Enum.Font.SourceSansBold
+AimLabel.Parent = MainFrame
+
+-- Sebesség Kijelző
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Size = UDim2.new(1, 0, 0, 25)
+SpeedLabel.Position = UDim2.new(0, 0, 0, 260)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "Sebesség: 50"
+SpeedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+SpeedLabel.TextSize = 14
+SpeedLabel.Font = Enum.Font.SourceSans
+SpeedLabel.Parent = MainFrame
+
+-- Sebesség Csökkentése (-)
+local DecSpeed = Instance.new("TextButton")
+DecSpeed.Size = UDim2.new(0, 40, 0, 30)
+DecSpeed.Position = UDim2.new(0, 20, 0, 295)
+DecSpeed.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+DecSpeed.Text = "-"
+DecSpeed.TextColor3 = Color3.fromRGB(255, 255, 255)
+DecSpeed.TextSize = 18
+DecSpeed.Font = Enum.Font.SourceSansBold
+DecSpeed.Parent = MainFrame
+
+local DecCorner = Instance.new("UICorner")
+DecCorner.CornerRadius = UDim.new(0, 4)
+DecCorner.Parent = DecSpeed
+
+-- Sebesség Növelése (+)
+local IncSpeed = Instance.new("TextButton")
+IncSpeed.Size = UDim2.new(0, 40, 0, 30)
+IncSpeed.Position = UDim2.new(1, -60, 0, 295)
+IncSpeed.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+IncSpeed.Text = "+"
+IncSpeed.TextColor3 = Color3.fromRGB(255, 255, 255)
+IncSpeed.TextSize = 18
+IncSpeed.Font = Enum.Font.SourceSansBold
+IncSpeed.Parent = MainFrame
+
+local IncCorner = Instance.new("UICorner")
+IncCorner.CornerRadius = UDim.new(0, 4)
+IncCorner.Parent = IncSpeed
+
+
+-- GLOBÁLIS BEÁLLÍTÁSOK ÉS LOGIKÁK --
+local flying = false
+local speed = 50
+local espEnabled = false
+local autoShootEnabled = false
+local holdingRightClick = false
+local espObjects = {}
+local bodyVelocity, bodyGyro
+
+-- REPÜLÉS --
+local function startFlying()
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local root = character.HumanoidRootPart
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.P = 9e4
+    bodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.cframe = root.CFrame
+    bodyGyro.Parent = root
+
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.velocity = Vector3.new(0, 0.1, 0)
+    bodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVelocity.Parent = root
+
+    character:FindFirstChildOfClass("Humanoid").PlatformStand = true
+
+    coroutine.wrap(function()
+        while flying and character and root and bodyVelocity and bodyGyro do
+            local moveDirection = Vector3.new(0, 0, 0)
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
+
+            if moveDirection.Magnitude > 0 then bodyVelocity.velocity = moveDirection.Unit * speed else bodyVelocity.velocity = Vector3.new(0, 0, 0) end
+            bodyGyro.cframe = Camera.CFrame
+            RunService.RenderStepped:Wait()
         end
-    end)
+    end)()
 end
 
--- === LOGIKÁK (FLY, NOCLIP, ESP) ===
-local function ManageFly(state)
-    FlyEnabled = state
-    local Character = LocalPlayer.Character
-    if not Character or not Character:FindFirstChild("HumanoidRootPart") then return end
-    local RootPart = Character.HumanoidRootPart
+local function stopFlying()
+    if bodyVelocity then bodyVelocity:Destroy() end
+    if bodyGyro then bodyGyro:Destroy() end
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChildOfClass("Humanoid") then character:FindFirstChildOfClass("Humanoid").PlatformStand = false end
+end
 
-    if FlyEnabled then
-        if Character:FindFirstChild("Animate") then Character.Animate.Disabled = true end
-        BodyGyro = Instance.new("BodyGyro")
-        BodyGyro.P = 9e4
-        BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-        BodyGyro.cframe = RootPart.CFrame
-        BodyGyro.Parent = RootPart
+-- RANDOM TP --
+local function teleportToRandomPlayer()
+    local allPlayers = Players:GetPlayers()
+    local targets = {}
+    for _, player in ipairs(allPlayers) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then table.insert(targets, player) end
+    end
+    if #targets > 0 then
+        local randomPlayer = targets[math.random(1, #targets)]
+        local myCharacter = LocalPlayer.Character
+        if myCharacter and myCharacter:FindFirstChild("HumanoidRootPart") then
+            local wasFlying = flying
+            if wasFlying then stopFlying() end
+            myCharacter.HumanoidRootPart.CFrame = randomPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
+            if wasFlying then task.wait(0.1) startFlying() end
+        end
+    end
+end
 
-        BodyVelocity = Instance.new("BodyVelocity")
-        BodyVelocity.velocity = Vector3.new(0, 0.1, 0)
-        BodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
-        BodyVelocity.Parent = RootPart
-
-        task.spawn(function()
-            while FlyEnabled and Character and RootPart and BodyGyro and BodyVelocity do
-                task.wait()
-                local MoveVector = Vector3.new(0,0,0)
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then MoveVector = MoveVector + CurrentCamera.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then MoveVector = MoveVector - CurrentCamera.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then MoveVector = MoveVector - CurrentCamera.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then MoveVector = MoveVector + CurrentCamera.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then MoveVector = MoveVector + Vector3.new(0, 1, 0) end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then MoveVector = MoveVector - Vector3.new(0, 1, 0) end
-
-                BodyGyro.cframe = CurrentCamera.CFrame
-                if MoveVector.Magnitude > 0 then
-                    BodyVelocity.velocity = MoveVector.Unit * FlySpeed
-                else
-                    BodyVelocity.velocity = Vector3.new(0, 0, 0)
-                end
+-- AIMBOT ÉS AUTO SHOOT --
+local function getClosestPlayerToCursor()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChildOfClass("Humanoid") and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+            local head = player.Character.Head
+            local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+            if onScreen then
+                local mousePos = UserInputService:GetMouseLocation()
+                local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                if distance < shortestDistance then shortestDistance = distance; closestPlayer = player end
             end
-            if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
-            if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
-if Character and Character:FindFirstChild("Animate") then Character.Animate.Disabled = false end
+        end
+    end
+    return closestPlayer
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then holdingRightClick = true end
 end)
-else
-if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
-if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
-if Character and Character:FindFirstChild("Animate") then Character.Animate.Disabled = false end
-end
-end
-local function ManageNoclip(state)
-NoclipEnabled = state
-if NoclipEnabled then
-NoclipConnection = RunService.Stepped:Connect(function()
-local Character = LocalPlayer.Character
-if Character and NoclipEnabled then
-for _, child in pairs(Character:GetDescendants()) do
-if child:IsA("BasePart") then child.CanCollide = false end
-end
-end
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then holdingRightClick = false end
 end)
+
+-- ESP --
+local function createESP(player)
+    if espObjects[player] then return end
+    local box = Instance.new("BoxHandleAdornment")
+Körültekintően használja a kódot.
+box.Name = "SolaraESPBox"; box.AlwaysOnTop = true; box.ZIndex = 5; box.Color3 = Color3.fromRGB(255, 50, 50); box.Transparency = 0.5
+local billboard = Instance.new("BillboardGui")
+billboard.Name = "SolaraESPName"; billboard.AlwaysOnTop = true; billboard.Size = UDim2.new(0, 200, 0, 50); billboard.StudsOffset = Vector3.new(0, 3, 0)
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 1, 0); label.BackgroundTransparency = 1; label.TextColor3 = Color3.fromRGB(255, 255, 255); label.TextStrokeTransparency = 0; label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0); label.TextSize = 12; label.Font = Enum.Font.SourceSansBold; label.Parent = billboard
+espObjects[player] = {Box = box, Billboard = billboard, Label = label}
+end
+local function removeESP(player)
+if espObjects[player] then espObjects[player].Box:Destroy(); espObjects[player].Billboard:Destroy(); espObjects[player] = nil end
+end
+-- FŐ CIKLUS (RenderStepped) --
+local lastShot = 0
+RunService.RenderStepped:Connect(function()
+local targetPlayer = nil
+-- Aimbot logikája
+if holdingRightClick then
+targetPlayer = getClosestPlayerToCursor()
+if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPlayer.Character.Head.Position)
+-- Auto Shoot logikája (Csak ha be van kapcsolva ÉS van érvényes célpont bemérve)
+if autoShootEnabled and tick() - lastShot > 0.1 then -- Kis késleltetés a kattintások közt a stabilitásért
+lastShot = tick()
+VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0) -- Bal klikk lenyomása
+task.wait(0.02)
+VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0) -- Bal klikk elengedése
+end
+end
+end
+-- ESP logikája
+for _, player in ipairs(Players:GetPlayers()) do
+if espEnabled and player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid") and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+createESP(player)
+local data = espObjects[player]
+local root = player.Character.HumanoidRootPart
+data.Box.Adornee = player.Character; data.Box.Size = player.Character:GetExtentsSize(); data.Box.Parent = root
+data.Billboard.Adornee = root; data.Billboard.Parent = root
+local distance = math.floor((LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude) or 0)
+data.Label.Text = player.Name .. " [" .. distance .. "m]"
 else
-if NoclipConnection then NoclipConnection:Disconnect() NoclipConnection = nil end
+removeESP(player)
 end
-end
-local function RemoveESP(player)
-if ActiveEspObjects[player] then
-if ActiveEspObjects[player].Billboard then ActiveEspObjects[player].Billboard:Destroy() end
-if ActiveEspObjects[player].Highlight then ActiveEspObjects[player].Highlight:Destroy() end
-if ActiveEspObjects[player].Connection then ActiveEspObjects[player].Connection:Disconnect() end
-ActiveEspObjects[player] = nil
-end
-end
-local function ApplyAdvancedESP(player)
-if player == LocalPlayer then return end
-RemoveESP(player)
-local function CharacterSetup(character)
-if not character then return end
-local head = character:WaitForChild("Head", 5)
-local humanoid = character:WaitForChild("Humanoid", 5)
-if not head or not humanoid then return end
-local Highlight = Instance.new("Highlight")
-Highlight.FillColor = Color3.fromRGB(255, 255, 255)
-Highlight.FillTransparency = 0.6
-Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-Highlight.Enabled = EspEnabled
-Highlight.Parent = character
-local Billboard = Instance.new("BillboardGui")
-Billboard.Size = UDim2.new(0, 200, 0, 50)
-Billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-Billboard.AlwaysOnTop = true
-Billboard.Enabled = EspEnabled
-Billboard.Adornee = head
-Billboard.Parent = head
-local TextLabel = Instance.new("TextLabel")
-TextLabel.Size = UDim2.new(1, 0, 1, 0)
-TextLabel.BackgroundTransparency = 1
-TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.Font = Enum.Font.SourceSansBold
-TextLabel.TextSize = 14
-TextLabel.Parent = Billboard
-local function UpdateText()
-if humanoid and humanoid.Parent then
-TextLabel.Text = string.format("%s\n[HP: %d/%d]", player.Name, math.floor(humanoid.Health), math.floor(humanoid.MaxHealth))
-end
-end
-local connection = humanoid.HealthChanged:Connect(UpdateText)
-UpdateText()
-ActiveEspObjects[player] = {Billboard = Billboard, Highlight = Highlight, TextLabel = TextLabel, Connection = connection}
-end
-if player.Character then CharacterSetup(player.Character) end
-player.CharacterAdded:Connect(CharacterSetup)
-end
-local function ManageESP(state)
-EspEnabled = state
-for player, objects in pairs(ActiveEspObjects) do
-if objects.Billboard then objects.Billboard.Enabled = state end
-if objects.Highlight then objects.Highlight.Enabled = state end
-end
-end
--- Funkciókapcsolók hozzáadása a főmenühöz
-CreateToggle("Repülés (Fly)", UDim2.new(0, 10, 0, 55), ManageFly)
-CreateToggle("Falon átjárás (Noclip)", UDim2.new(0, 10, 0, 105), ManageNoclip)
-CreateToggle("Játékos ESP (Name+HP)", UDim2.new(0, 10, 0, 155), ManageESP)
--- === KULCS ELLENŐRZÉS LOGIKA ===
-SubmitBtn.MouseButton1Click:Connect(function()
-if TextBox.Text == CorrectKey then
-KeyVerified = true
-UiVisible = true
--- Siker animáció futtatása (Zöld gomb villanás)
-TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 150, 50), Text = "SIKERES BELÉPÉS!"}):Play()
-task.wait(0.4)
--- KULCS ABLAK ELTŰNTETÉSE (Törlés a memóriából)
-KeyGui:Destroy()
--- FŐ PANEL AZONNALI MEGJELENÍTÉSE
-MainFrame.Visible = true
--- ESP Rendszer aktiválása a szerveren lévő játékosokra
-for _, player in pairs(Players:GetPlayers()) do
-ApplyAdvancedESP(player)
-end
-Players.PlayerAdded:Connect(ApplyAdvancedESP)
-Players.PlayerRemoving:Connect(RemoveESP)
-print("Solara sikeresen feloldva, panel megnyitva!")
-else
--- Hiba animáció (Piros villanás és rázkódás jellegű effekt a kereten)
-TextBox.Text = ""
-TweenService:Create(BoxStroke, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true), {Color = Color3.fromRGB(200, 50, 50)}):Play()
-SubmitBtn.Text = "HIBÁS KULCS!"
-SubmitBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40)
-task.wait(1)
-SubmitBtn.Text = "Kulcs Ellenőrzése"
-SubmitBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 end
 end)
+Players.PlayerRemoving:Connect(removeESP)
+-- UI GOMBOK KEZELÉSE --
+FlyButton.MouseButton1Click:Connect(function()
+flying = not flying
+if flying then FlyButton.Text = "Fly: ON"; FlyButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50); startFlying() else FlyButton.Text = "Fly: OFF"; FlyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50); stopFlying() end
+end)
+TpButton.MouseButton1Click:Connect(function() teleportToRandomPlayer() end)
+EspButton.MouseButton1Click:Connect(function()
+espEnabled = not espEnabled
+if espEnabled then EspButton.Text = "ESP: ON"; EspButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50) else EspButton.Text = "ESP: OFF"; EspButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50); for p, _ in pairs(espObjects) do removeESP(p) end end
+end)
+AutoShootButton.MouseButton1Click:Connect(function()
+autoShootEnabled = not autoShootEnabled
+if autoShootEnabled then
+AutoShootButton.Text = "Auto Shoot: ON"
+AutoShootButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+else
+AutoShootButton.Text = "Auto Shoot: OFF"
+AutoShootButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+end
+end)
+IncSpeed.MouseButton1Click:Connect(function() speed = math.min(speed + 10, 300); SpeedLabel.Text = "Sebesség: " .. speed end)
+DecSpeed.MouseButton1Click:Connect(function() speed = math.max(speed - 10, 10); SpeedLabel.Text = "Sebesség: " .. speed end)
+LocalPlayer.CharacterAdded:Connect(function() flying = false; FlyButton.Text = "Fly: OFF"; FlyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50) end)
