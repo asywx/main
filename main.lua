@@ -1,11 +1,9 @@
--- Roblox Fly + Random TP + Aimbot + ESP + Auto Shoot (Solara kompatibilis)
+-- Roblox Multitool Keybind Edition (Solara kompatibilis)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-
--- VirtualInputManager betöltése az Auto Shoot szimulációhoz
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
 -- UI Létrehozása
@@ -14,7 +12,7 @@ ScreenGui.Name = "SolaraFlyGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Fő Panel (Átméretezve a plusz gomb miatt)
+-- Fő Panel
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 220, 0, 350)
 MainFrame.Position = UDim2.new(0.5, -110, 0.4, -175)
@@ -33,9 +31,9 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 Title.BorderSizePixel = 0
-Title.Text = "SOLARA MULTITOOL v3"
+Title.Text = "SOLARA MULTITOOL"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
+Title.TextSize = 15
 Title.Font = Enum.Font.SourceSansBold
 Title.Parent = MainFrame
 
@@ -43,14 +41,14 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 8)
 TitleCorner.Parent = Title
 
--- Fly Ki/Be Kapcsoló Gomb
+-- Fly Gomb (F)
 local FlyButton = Instance.new("TextButton")
 FlyButton.Size = UDim2.new(0, 180, 0, 35)
 FlyButton.Position = UDim2.new(0.5, -90, 0, 45)
 FlyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-FlyButton.Text = "Fly: OFF"
+FlyButton.Text = "Fly: OFF [F]"
 FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyButton.TextSize = 15
+FlyButton.TextSize = 14
 FlyButton.Font = Enum.Font.SourceSansBold
 FlyButton.Parent = MainFrame
 
@@ -65,7 +63,7 @@ TpButton.Position = UDim2.new(0.5, -90, 0, 90)
 TpButton.BackgroundColor3 = Color3.fromRGB(40, 100, 200)
 TpButton.Text = "Random TP"
 TpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-TpButton.TextSize = 15
+TpButton.TextSize = 14
 TpButton.Font = Enum.Font.SourceSansBold
 TpButton.Parent = MainFrame
 
@@ -73,14 +71,14 @@ local TpCorner = Instance.new("UICorner")
 TpCorner.CornerRadius = UDim.new(0, 6)
 TpCorner.Parent = TpButton
 
--- ESP Ki/Be Kapcsoló Gomb
+-- ESP Gomb (E)
 local EspButton = Instance.new("TextButton")
 EspButton.Size = UDim2.new(0, 180, 0, 35)
 EspButton.Position = UDim2.new(0.5, -90, 0, 135)
 EspButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-EspButton.Text = "ESP: OFF"
+EspButton.Text = "ESP: OFF [E]"
 EspButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-EspButton.TextSize = 15
+EspButton.TextSize = 14
 EspButton.Font = Enum.Font.SourceSansBold
 EspButton.Parent = MainFrame
 
@@ -88,14 +86,29 @@ local EspCorner = Instance.new("UICorner")
 EspCorner.CornerRadius = UDim.new(0, 6)
 EspCorner.Parent = EspButton
 
--- Auto Shoot Ki/Be Kapcsoló Gomb
+-- Aimbot Gomb (K)
+local AimbotToggleBtn = Instance.new("TextButton")
+AimbotToggleBtn.Size = UDim2.new(0, 180, 0, 35)
+AimbotToggleBtn.Position = UDim2.new(0.5, -90, 0, 180)
+AimbotToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+AimbotToggleBtn.Text = "Aimbot: OFF [K]"
+AimbotToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimbotToggleBtn.TextSize = 14
+AimbotToggleBtn.Font = Enum.Font.SourceSansBold
+AimbotToggleBtn.Parent = MainFrame
+
+local AimToggleCorner = Instance.new("UICorner")
+AimToggleCorner.CornerRadius = UDim.new(0, 6)
+AimToggleCorner.Parent = AimbotToggleBtn
+
+-- Auto Shoot Gomb (É)
 local AutoShootButton = Instance.new("TextButton")
 AutoShootButton.Size = UDim2.new(0, 180, 0, 35)
-AutoShootButton.Position = UDim2.new(0.5, -90, 0, 180)
+AutoShootButton.Position = UDim2.new(0.5, -90, 0, 225)
 AutoShootButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-AutoShootButton.Text = "Auto Shoot: OFF"
+AutoShootButton.Text = "Auto Shoot: OFF [É]"
 AutoShootButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoShootButton.TextSize = 15
+AutoShootButton.TextSize = 14
 AutoShootButton.Font = Enum.Font.SourceSansBold
 AutoShootButton.Parent = MainFrame
 
@@ -103,32 +116,21 @@ local AutoShootCorner = Instance.new("UICorner")
 AutoShootCorner.CornerRadius = UDim.new(0, 6)
 AutoShootCorner.Parent = AutoShootButton
 
--- Aimbot Infó Panel
-local AimLabel = Instance.new("TextLabel")
-AimLabel.Size = UDim2.new(1, 0, 0, 25)
-AimLabel.Position = UDim2.new(0, 0, 0, 230)
-AimLabel.BackgroundTransparency = 1
-AimLabel.Text = "[Jobb Klikk: AIMBOT]"
-AimLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
-AimLabel.TextSize = 14
-AimLabel.Font = Enum.Font.SourceSansBold
-AimLabel.Parent = MainFrame
-
 -- Sebesség Kijelző
 local SpeedLabel = Instance.new("TextLabel")
 SpeedLabel.Size = UDim2.new(1, 0, 0, 25)
-SpeedLabel.Position = UDim2.new(0, 0, 0, 260)
+SpeedLabel.Position = UDim2.new(0, 0, 0, 270)
 SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Text = "Sebesség: 50"
+SpeedLabel.Text = "Repülési Sebesség: 50"
 SpeedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-SpeedLabel.TextSize = 14
+SpeedLabel.TextSize = 13
 SpeedLabel.Font = Enum.Font.SourceSans
 SpeedLabel.Parent = MainFrame
 
 -- Sebesség Csökkentése (-)
 local DecSpeed = Instance.new("TextButton")
 DecSpeed.Size = UDim2.new(0, 40, 0, 30)
-DecSpeed.Position = UDim2.new(0, 20, 0, 295)
+DecSpeed.Position = UDim2.new(0, 20, 0, 305)
 DecSpeed.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 DecSpeed.Text = "-"
 DecSpeed.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -143,7 +145,7 @@ DecCorner.Parent = DecSpeed
 -- Sebesség Növelése (+)
 local IncSpeed = Instance.new("TextButton")
 IncSpeed.Size = UDim2.new(0, 40, 0, 30)
-IncSpeed.Position = UDim2.new(1, -60, 0, 295)
+IncSpeed.Position = UDim2.new(1, -60, 0, 305)
 IncSpeed.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 IncSpeed.Text = "+"
 IncSpeed.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -156,16 +158,16 @@ IncCorner.CornerRadius = UDim.new(0, 4)
 IncCorner.Parent = IncSpeed
 
 
--- GLOBÁLIS BEÁLLÍTÁSOK ÉS LOGIKÁK --
+-- GLOBÁLIS LOGIKÁK --
 local flying = false
 local speed = 50
 local espEnabled = false
+local aimbotEnabled = false
 local autoShootEnabled = false
-local holdingRightClick = false
 local espObjects = {}
 local bodyVelocity, bodyGyro
 
--- REPÜLÉS --
+-- FLY --
 local function startFlying()
     local character = LocalPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
@@ -208,6 +210,19 @@ local function stopFlying()
     if character and character:FindFirstChildOfClass("Humanoid") then character:FindFirstChildOfClass("Humanoid").PlatformStand = false end
 end
 
+local function toggleFly()
+    flying = not flying
+    if flying then
+        FlyButton.Text = "Fly: ON [F]"
+        FlyButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        startFlying()
+    else
+        FlyButton.Text = "Fly: OFF [F]"
+        FlyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        stopFlying()
+    end
+end
+
 -- RANDOM TP --
 local function teleportToRandomPlayer()
     local allPlayers = Players:GetPlayers()
@@ -227,7 +242,7 @@ local function teleportToRandomPlayer()
     end
 end
 
--- AIMBOT ÉS AUTO SHOOT --
+-- AIMBOT TARGET FINDER --
 local function getClosestPlayerToCursor()
     local closestPlayer = nil
     local shortestDistance = math.huge
@@ -245,47 +260,85 @@ local function getClosestPlayerToCursor()
     return closestPlayer
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then holdingRightClick = true end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then holdingRightClick = false end
-end)
-
+local function toggleAimbot()
+    aimbotEnabled = not aimbotEnabled
+    if aimbotEnabled then
+AimbotToggleBtn.Text = "Aimbot: ON [K]"
+AimbotToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+else
+AimbotToggleBtn.Text = "Aimbot: OFF [K]"
+AimbotToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+end
+end
+-- AUTO SHOOT --
+local function toggleAutoShoot()
+autoShootEnabled = not autoShootEnabled
+if autoShootEnabled then
+AutoShootButton.Text = "Auto Shoot: ON [É]"
+AutoShootButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+else
+AutoShootButton.Text = "Auto Shoot: OFF [É]"
+AutoShootButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+end
+end
 -- ESP --
 local function createESP(player)
-    if espObjects[player] then return end
-    local box = Instance.new("BoxHandleAdornment")
+if espObjects[player] then return end
+local box = Instance.new("BoxHandleAdornment")
 box.Name = "SolaraESPBox"; box.AlwaysOnTop = true; box.ZIndex = 5; box.Color3 = Color3.fromRGB(255, 50, 50); box.Transparency = 0.5
 local billboard = Instance.new("BillboardGui")
 billboard.Name = "SolaraESPName"; billboard.AlwaysOnTop = true; billboard.Size = UDim2.new(0, 200, 0, 50); billboard.StudsOffset = Vector3.new(0, 3, 0)
 local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1, 0, 1, 0); label.BackgroundTransparency = 1; label.TextColor3 = Color3.fromRGB(255, 255, 255); label.TextStrokeTransparency = 0; label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0); label.TextSize = 12; label.Font = Enum.Font.SourceSansBold; label.Parent = billboard
+label.Size = UDim2.new(1, 0, 1, 0); label.BackgroundTransparency = 1; label.TextColor3 = Color3.fromRGB(255, 255, 255) ; label.TextStrokeTransparency = 0; label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0); label.TextSize = 12; label.Font = Enum.Font.SourceSansBold; label.Parent = billboard
 espObjects[player] = {Box = box, Billboard = billboard, Label = label}
 end
 local function removeESP(player)
 if espObjects[player] then espObjects[player].Box:Destroy(); espObjects[player].Billboard:Destroy(); espObjects[player] = nil end
 end
--- FŐ CIKLUS (RenderStepped) --
+local function toggleESP()
+espEnabled = not espEnabled
+if espEnabled then
+EspButton.Text = "ESP: ON [E]"
+EspButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+else
+EspButton.Text = "ESP: OFF [E]"
+EspButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+for p, _ in pairs(espObjects) do removeESP(p) end
+end
+end
+-- BILLENTYŰK FIGYELÉSE (Keybinds) --
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+if gameProcessed then return end
+if input.KeyCode == Enum.KeyCode.F then
+toggleFly()
+elseif input.KeyCode == Enum.KeyCode.E then
+toggleESP()
+elseif input.KeyCode == Enum.KeyCode.K then
+toggleAimbot()
+elseif input.KeyCode == Enum.KeyCode.Semicolon then -- Magyar 'É'
+toggleAutoShoot()
+end
+end)
+-- FŐ ITERÁCIÓS CIKLUS --
 local lastShot = 0
 RunService.RenderStepped:Connect(function()
-local targetPlayer = nil
--- Aimbot logikája
-if holdingRightClick then
-targetPlayer = getClosestPlayerToCursor()
+-- JAVÍTVA: Valós időben, kényszerítve ellenőrizzük, hogy le van-e nyomva a jobb klikk az egéren
+local isRightClickPressed = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+-- Csak akkor indul el az Aim és a Shoot, ha be van kapcsolva [K] ÉS nyomva van tartva a jobb klikk
+if aimbotEnabled and isRightClickPressed then
+local targetPlayer = getClosestPlayerToCursor()
 if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
 Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPlayer.Character.Head.Position)
--- Auto Shoot logikája (Csak ha be van kapcsolva ÉS van érvényes célpont bemérve)
-if autoShootEnabled and tick() - lastShot > 0.1 then -- Kis késleltetés a kattintások közt a stabilitásért
+-- Auto Shoot kezelése a stabil működésért
+if autoShootEnabled and tick() - lastShot > 0.08 then
 lastShot = tick()
-VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0) -- Bal klikk lenyomása
-task.wait(0.02)
-VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0) -- Bal klikk elengedése
+VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+task.wait(0.01)
+VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
 end
 end
 end
--- ESP logikája
+-- ESP frissítése
 for _, player in ipairs(Players:GetPlayers()) do
 if espEnabled and player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid") and player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
 createESP(player)
@@ -301,26 +354,12 @@ end
 end
 end)
 Players.PlayerRemoving:Connect(removeESP)
--- UI GOMBOK KEZELÉSE --
-FlyButton.MouseButton1Click:Connect(function()
-flying = not flying
-if flying then FlyButton.Text = "Fly: ON"; FlyButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50); startFlying() else FlyButton.Text = "Fly: OFF"; FlyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50); stopFlying() end
-end)
-TpButton.MouseButton1Click:Connect(function() teleportToRandomPlayer() end)
-EspButton.MouseButton1Click:Connect(function()
-espEnabled = not espEnabled
-if espEnabled then EspButton.Text = "ESP: ON"; EspButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50) else EspButton.Text = "ESP: OFF"; EspButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50); for p, _ in pairs(espObjects) do removeESP(p) end end
-end)
-AutoShootButton.MouseButton1Click:Connect(function()
-autoShootEnabled = not autoShootEnabled
-if autoShootEnabled then
-AutoShootButton.Text = "Auto Shoot: ON"
-AutoShootButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-else
-AutoShootButton.Text = "Auto Shoot: OFF"
-AutoShootButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-end
-end)
-IncSpeed.MouseButton1Click:Connect(function() speed = math.min(speed + 10, 300); SpeedLabel.Text = "Sebesség: " .. speed end)
-DecSpeed.MouseButton1Click:Connect(function() speed = math.max(speed - 10, 10); SpeedLabel.Text = "Sebesség: " .. speed end)
-LocalPlayer.CharacterAdded:Connect(function() flying = false; FlyButton.Text = "Fly: OFF"; FlyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50) end)
+-- KATTINTÁSOK REGISZTRÁCIÓJA --
+FlyButton.MouseButton1Click:Connect(toggleFly)
+TpButton.MouseButton1Click:Connect(teleportToRandomPlayer)
+EspButton.MouseButton1Click:Connect(toggleESP)
+AimbotToggleBtn.MouseButton1Click:Connect(toggleAimbot)
+AutoShootButton.MouseButton1Click:Connect(toggleAutoShoot)
+IncSpeed.MouseButton1Click:Connect(function() speed = math.min(speed + 10, 300); SpeedLabel.Text = "Repülési Sebesség: " .. speed end)
+DecSpeed.MouseButton1Click:Connect(function() speed = math.max(speed - 10, 10); SpeedLabel.Text = "Repülési Sebesség: " .. speed end)
+LocalPlayer.CharacterAdded:Connect(function() flying = false; FlyButton.Text = "Fly: OFF [F]" ; FlyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50) end)
