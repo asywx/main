@@ -257,7 +257,6 @@ end)
 local function createESP(player)
     if espObjects[player] then return end
     local box = Instance.new("BoxHandleAdornment")
-Körültekintően használja a kódot.
 box.Name = "SolaraESPBox"; box.AlwaysOnTop = true; box.ZIndex = 5; box.Color3 = Color3.fromRGB(255, 50, 50); box.Transparency = 0.5
 local billboard = Instance.new("BillboardGui")
 billboard.Name = "SolaraESPName"; billboard.AlwaysOnTop = true; billboard.Size = UDim2.new(0, 200, 0, 50); billboard.StudsOffset = Vector3.new(0, 3, 0)
